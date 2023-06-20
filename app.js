@@ -26,6 +26,11 @@ const youtube = google.youtube({
   auth: oauth2Client,
 });
 
+const youtube2 = google.youtube({
+  version: "v3",
+  auth: process.env.YOUTUBE_API_KEY,
+});
+
 const app = express();
 
 app.post("/webhook", bot.parser());
@@ -107,6 +112,37 @@ bot.on("message", function (event) {
           );
         }
       });
+    }
+
+    if (message.toLowerCase() === "list") {
+      youtube2.playlistItems.list(
+        {
+          playlistId: "PLiCvt-Pmy0niC2hwAwmM8PoGF2kHPftX_",
+          part: "snippet",
+          maxResults: 50, // API 的最大值
+        },
+        (err, res) => {
+          if (err) {
+            console.error("The API returned an error: " + err);
+            return;
+          }
+          const items = res.data.items;
+          if (items) {
+            console.log("Videos in playlist:");
+            let reply = "Videos in playlist:\n";
+            items.map((item, index) => {
+              reply += ` ${index++}. ${
+                item.snippet.title
+              }: https://www.youtube.com/watch?v=${
+                item.snippet.resourceId.videoId
+              }\n\n`;
+            });
+            event.reply(reply);
+          } else {
+            console.log("No videos found in playlist.");
+          }
+        }
+      );
     }
   }
 });
